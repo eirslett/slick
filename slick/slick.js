@@ -56,6 +56,7 @@
                 },
                 dots: false,
                 dotsClass: 'slick-dots',
+                dotsTabbable: true,
                 draggable: true,
                 easing: 'linear',
                 edgeFriction: 0.35,
@@ -79,6 +80,7 @@
                 speed: 500,
                 swipe: true,
                 swipeToSlide: false,
+                tabThroughSlides: false,
                 touchMove: true,
                 touchThreshold: 5,
                 useCSS: true,
@@ -495,6 +497,9 @@
 
             _.$dots.find('li').first().addClass('slick-active').attr('aria-hidden', 'false');
 
+            if (!_.options.dotsTabbable) {
+                _.$dots.find('button').attr('tabindex', '-1');
+            }
         }
 
     };
@@ -1275,12 +1280,14 @@
     };
 
     Slick.prototype.initADA = function() {
-        var _ = this;
+        var _ = this,
+            clonedTabIndex = _.options.tabThroughSlides === true ? '0' : '-1';
+
         _.$slides.add(_.$slideTrack.find('.slick-cloned')).attr({
             'aria-hidden': 'true',
-            'tabindex': '-1'
+            'tabindex': clonedTabIndex
         }).find('a, input, button, select').attr({
-            'tabindex': '-1'
+            'tabindex': clonedTabIndex
         });
 
         _.$slideTrack.attr('role', 'listbox');
@@ -1391,6 +1398,10 @@
 
         $(document).on(_.visibilityChange, $.proxy(_.visibility, _));
 
+        if (_.options.tabThroughSlides === true) {
+            _.$list.on('focusin.slick-slide', $.proxy(_.focusSlideHandler, _));
+        }
+
         if (_.options.accessibility === true) {
             _.$list.on('keydown.slick', _.keyHandler);
         }
@@ -1449,6 +1460,15 @@
             }
         }
 
+    };
+
+    Slick.prototype.focusSlideHandler = function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        var _ = this,
+            slide = $(event.target).closest('.slick-slide'),
+            index = slide.data('slick-index');
+        _.slideHandler(index);
     };
 
     Slick.prototype.lazyLoad = function() {
